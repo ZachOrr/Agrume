@@ -466,13 +466,18 @@ extension AgrumeCell: UIGestureRecognizerDelegate {
   private func appropriateValue(defaultValue: CGFloat) -> CGFloat {
     let screenWidth = UIApplication.shared.windows.first?.bounds.width ?? UIScreen.main.bounds.width
     let screenHeight = UIApplication.shared.windows.first?.bounds.height ?? UIScreen.main.bounds.height
+    let screenArea = screenWidth * screenHeight
+    guard screenArea > 0 else { return defaultValue }
     // Default value that works well for the screenSize adjusted for the actual size of the device
-    return defaultValue * ((320 * 480) / (screenWidth * screenHeight))
+    return defaultValue * ((320 * 480) / screenArea)
   }
 
   private func factor(forView view: UIView) -> CGFloat {
     let actualArea = view.bounds.width * view.bounds.height
     let referenceArea = contentView.bounds.height * contentView.bounds.width
+    // Guard against zero/non-finite bounds (e.g. image view not yet laid out when a pan begins),
+    // which would otherwise yield Inf/NaN and cause UIKit Dynamics' Box2D body to abort on density.
+    guard actualArea > 0, referenceArea.isFinite else { return 1 }
     return referenceArea / actualArea
   }
 
